@@ -24,6 +24,10 @@ zenkit = { package = "zenkit-rs", version = "0.1.2", default-features = false, f
     "parallel",
 ] }
 
+[features]
+# Builds on GPUI Fast, longbridge's fork of GPUI with faster rendering and layout, instead of Zed's.
+gpui-fast = ["gpui-kit/gpui-fast"]
+
 # Dragging files out of the window: GPUI's Windows backend has no outbound drag yet, so the
 # explorer starts the shell's own.
 [target.'cfg(windows)'.dependencies]

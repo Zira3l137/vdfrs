@@ -27,6 +27,8 @@ cargo run --release -- Data/Anims.vdf Data/ModVDF/MyMod.mod
 
 It needs a recent stable Rust, and on Linux the packages GPUI builds against
 (`libxkbcommon-dev`, `libwayland-dev`, `libxcb1-dev`, `libvulkan-dev`, `libfontconfig-dev`).
+`--features gpui-fast` builds it on [GPUI Fast](https://github.com/longbridge/gpui-fast), a fork
+of GPUI with faster rendering and layout, instead of Zed's.
 
 ## What it does
 
