@@ -1,8 +1,13 @@
 # vdfrs
 
 A file explorer for the ZenGin's `.vdf` and `.mod` archives, built on
-[zenkit-rs](https://github.com/Zira3l137/zenkit-rs) and [GPUI Kit](https://gpui-kit.com). Open an archive and work in it as in a folder: browse, search,
-preview, drag files in and out, rename, delete, and save it back as the game reads it.
+[zenkit-rs](https://github.com/Zira3l137/zenkit-rs) and [GPUI Kit](https://gpui-kit.com). Open an
+archive and work in it as in a folder: browse, search, preview, drag files in and out, rename,
+delete, and save it back as the game reads it.
+
+vdfrs was made by Zira3l137 with the assistance of Claude (Claude Opus 5.5), Anthropic's AI model.
+It began as a test of zenkit-rs in a real application, which also turned up the two additions to
+its VFS released in zenkit-rs 0.1.1.
 
 Windows and Linux builds of every release are on the
 [releases page](https://github.com/Zira3l137/vdfrs/releases). To build it yourself:
