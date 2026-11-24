@@ -4,6 +4,9 @@ A file explorer for the ZenGin's `.vdf` and `.mod` archives, built on
 [zenkit-rs](https://github.com/Zira3l137/zenkit-rs) and [GPUI Kit](https://gpui-kit.com). Open an archive and work in it as in a folder: browse, search,
 preview, drag files in and out, rename, delete, and save it back as the game reads it.
 
+Windows and Linux builds of every release are on the
+[releases page](https://github.com/Zira3l137/vdfrs/releases). To build it yourself:
+
 ```sh
 cargo run --release -- Data/Anims.vdf Data/ModVDF/MyMod.mod
 ```
@@ -39,6 +42,45 @@ It needs a recent stable Rust, and on Linux the packages GPUI builds against
 - Opening any file in the program the system has for it, from a temporary copy.
 - Light and dark themes.
 
+## In Windows Explorer
+
+Like 7-Zip, vdfrs can put a **vdfrs** submenu in Explorer's context menu. Turn it on with the
+folder button in vdfrs's title bar, or from a terminal:
+
+```sh
+vdfrs shell install              # the menu
+vdfrs shell install --associate  # the menu, and .vdf and .mod files open in vdfrs on a double click
+vdfrs shell uninstall            # takes all of it out again
+vdfrs shell status
+```
+
+| Right-click on…     | The vdfrs submenu has                                                     |
+|---------------------|---------------------------------------------------------------------------|
+| `.vdf` and `.mod`   | Open, Extract files…, Extract here, Extract to own folder, Add to new archive… |
+| Files and folders   | Add to new archive…, Pack into .vdf                                       |
+
+Each works on everything selected: opening several archives opens them as tabs of one window,
+extracting several does each one, and packing several files makes one archive, named after the
+folder they are in. Extracting and packing show a small progress window that closes when it is
+done, or says what went wrong.
+
+The integration is a set of registry keys under `HKEY_CURRENT_USER\Software\Classes`, for your user
+only, so it needs no administrator rights. It points to the `vdfrs.exe` it was turned on from: move
+the program, and turn it on again from the new place. On Windows 11 the menu is under
+**Show more options**.
+
+## On the command line
+
+The commands the menu runs work from a terminal too:
+
+```sh
+vdfrs extract Anims.vdf Textures.vdf          # each into a folder named after it
+vdfrs extract --here Anims.vdf                # into the folder it is in
+vdfrs extract --to D:/Out Anims.vdf
+vdfrs pack _work/Data --out MyMod.vdf         # without --out, beside the first item
+vdfrs new _work                               # a new archive in the explorer, unsaved
+```
+
 ## Keys
 
 | Keys                                | Does                                    |
@@ -72,3 +114,4 @@ a save left out.
 - Dragging out of the window works on Windows and on Linux under Wayland. GPUI has no outbound
   drag on X11, so there, use Extract.
 - The file dialogs on Linux go through the desktop portal (`xdg-desktop-portal`).
+- Opening an archive from Explorer starts a new window rather than a tab in an open one.
