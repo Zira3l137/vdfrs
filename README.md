@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/banner.png" alt="vdfrs, a fast explorer for Gothic's .vdf and .mod archives" width="100%">
+</p>
+
 # vdfrs
 
 A file explorer for the ZenGin's `.vdf` and `.mod` archives, built on
@@ -8,6 +12,11 @@ delete, and save it back as the game reads it.
 vdfrs was made by Zira3l137 with the assistance of Claude (Claude Opus 5.5), Anthropic's AI model.
 It began as a test of zenkit-rs in a real application, which also turned up the two additions to
 its VFS released in zenkit-rs 0.1.1.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/dark.png">
+  <img src="docs/screenshots/light.png" alt="vdfrs with a mod open in two tabs: the folder tree, the textures of the mod listed, and the selected texture shown in the preview" width="100%">
+</picture>
 
 Windows and Linux builds of every release are on the
 [releases page](https://github.com/Zira3l137/vdfrs/releases). To build it yourself:
@@ -47,6 +56,25 @@ It needs a recent stable Rust, and on Linux the packages GPUI builds against
 - Opening any file in the program the system has for it, from a temporary copy.
 - Light and dark themes.
 
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/search.png" alt="Searching a whole archive for wall, with the folder of each match"></td>
+    <td width="50%"><img src="docs/screenshots/scripts.png" alt="A dialogue script shown as text in the dark theme"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Search a whole archive as you type</sub></td>
+    <td align="center"><sub>Read scripts and other text right in the preview</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/drag.png" alt="Three textures dragged onto another archive's tab"></td>
+    <td width="50%"><img src="docs/screenshots/menu.png" alt="The context menu of three selected textures"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Drag entries into other folders and other archives</sub></td>
+    <td align="center"><sub>Everything a right click away, with its shortcut</sub></td>
+  </tr>
+</table>
+
 ## In Windows Explorer
 
 Like 7-Zip, vdfrs can put a **vdfrs** submenu in Explorer's context menu. Turn it on with the
@@ -58,6 +86,10 @@ vdfrs shell install --associate  # the menu, and .vdf and .mod files open in vdf
 vdfrs shell uninstall            # takes all of it out again
 vdfrs shell status
 ```
+
+<p align="center">
+  <img src="docs/screenshots/shell.png" alt="The Explorer integration dialog, and the progress window extracting an archive" width="100%">
+</p>
 
 | Right-click on…     | The vdfrs submenu has                                                     |
 |---------------------|---------------------------------------------------------------------------|
@@ -76,7 +108,8 @@ the program, and turn it on again from the new place. On Windows 11 the menu is 
 
 ## On the command line
 
-The commands the menu runs work from a terminal too:
+The commands the menu runs work from a terminal too, printing what they did instead of showing a
+window, so they also work without a desktop, over SSH or in a script:
 
 ```sh
 vdfrs extract Anims.vdf Textures.vdf          # each into a folder named after it
