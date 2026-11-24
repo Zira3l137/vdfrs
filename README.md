@@ -30,9 +30,9 @@ It needs a recent stable Rust, and on Linux the packages GPUI builds against
 
 ## What it does
 
-- **Tabs.** Each archive opens in a tab of its own, read and parsed on a background thread. Drop
-  `.vdf` or `.mod` files on the window to open them; drop anything else on the start page to pack
-  it into a new archive.
+- **Tabs.** Each archive opens in a tab of its own, at once however large it is: only its catalog
+  is read, and each file the first time you open it. Drop `.vdf` or `.mod` files on the window to
+  open them; drop anything else on the start page to pack it into a new archive.
 - **Browsing.** A folder tree, a list that draws only the rows on screen, a breadcrumb bar whose
   parts are drop targets too, back, forward and up. The list sorts by name, type, size or date,
   folders first.
@@ -153,3 +153,5 @@ a save left out.
   drag on X11, so there, use Extract.
 - The file dialogs on Linux go through the desktop portal (`xdg-desktop-portal`).
 - Opening an archive from Explorer starts a new window rather than a tab in an open one.
+- An open archive stays open, since its files are read as you open them. On Windows, saving it over
+  itself needs an NTFS drive; on a FAT32 or exFAT one, save it under another name.

@@ -18,7 +18,7 @@ gpui-kit = "0.11"
 image = { version = "0.25", default-features = false }
 rayon = "1.12"
 smallvec = "1"
-zenkit = { package = "zenkit-rs", version = "0.1.1", default-features = false, features = [
+zenkit = { package = "zenkit-rs", version = "0.1.2", default-features = false, features = [
     "vfs",
     "texture",
     "parallel",
