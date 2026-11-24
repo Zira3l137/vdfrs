@@ -224,9 +224,10 @@ pub mod windows {
         if items.is_empty() {
             return;
         }
-        // SAFETY: both are plain queries or releases on the calling thread's own state.
+        // SAFETY: a plain query of the calling thread's ID.
         let ui_thread = unsafe { GetCurrentThreadId() };
         // GPUI holds the mouse capture during its drag; the shell's drag needs it.
+        // SAFETY: releases a capture this thread holds, if any; nothing relies on it afterwards.
         let _ = unsafe { ReleaseCapture() };
 
         std::thread::spawn(move || {
