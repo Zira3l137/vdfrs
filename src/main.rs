@@ -138,14 +138,18 @@ fn main() -> ExitCode {
                 _ => Some(Destination::OwnFolder),
             };
             match gathered("extract", archives, gather) {
-                Some(archives) => Run::Task(Job::Extract { archives, dest }),
+                // Picking a folder needs a window, as does Explorer, which has no terminal to show
+                // progress in.
+                Some(archives) if gather || pick => Run::Task(Job::Extract { archives, dest }),
+                Some(archives) => return in_terminal(Job::Extract { archives, dest }),
                 None => return ExitCode::SUCCESS,
             }
         }
         Some(Command::Pack { paths, out, gather }) => match gathered("pack", paths, gather) {
             Some(paths) => {
                 let out = out.unwrap_or_else(|| jobs::pack_output(&paths));
-                Run::Task(Job::Pack { paths, out })
+                let job = Job::Pack { paths, out };
+                if gather { Run::Task(job) } else { return in_terminal(job) }
             }
             None => return ExitCode::SUCCESS,
         },
@@ -158,6 +162,16 @@ fn main() -> ExitCode {
 enum Run {
     Explorer(Startup),
     Task(Job),
+}
+
+fn in_terminal(job: Job) -> ExitCode {
+    match task::run_in_terminal(job) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(reason) => {
+            eprintln!("vdfrs: {reason}");
+            ExitCode::FAILURE
+        }
+    }
 }
 
 /// The paths of the whole selection if this process is the one to act on it, see [`gather`].

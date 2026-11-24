@@ -140,7 +140,7 @@ impl TaskView {
 }
 
 /// Runs a job to the end, gathering the failures of a batch rather than stopping at the first.
-fn run(job: Job, progress: &Progress) -> Result<(), String> {
+pub fn run(job: Job, progress: &Progress) -> Result<(), String> {
     match job {
         Job::Extract { archives, dest } => {
             let dest = dest.unwrap_or(Destination::OwnFolder);
@@ -155,6 +155,29 @@ fn run(job: Job, progress: &Progress) -> Result<(), String> {
             jobs::pack(&paths, &out, progress).map(drop).map_err(|e| e.report().to_string())
         }
     }
+}
+
+/// Runs a job from a terminal: no window, a line to say what it did, and the reason if it failed.
+#[allow(clippy::print_stdout)]
+pub fn run_in_terminal(job: Job) -> Result<(), String> {
+    let (title, _) = describe(&job);
+    let progress = Progress::default();
+    let target = match &job {
+        Job::Pack { out, .. } => Some(out.display().to_string()),
+        Job::Extract { dest: Some(Destination::Folder(folder)), .. } => {
+            Some(folder.display().to_string())
+        }
+        Job::Extract { .. } => None,
+    };
+    run(job, &progress)?;
+    let done = format::count(progress.done.load(Ordering::Relaxed), "file", "files");
+    let verb = title.split_whitespace().next().unwrap_or("Done");
+    let past = if verb == "Packing" { "Packed" } else { "Extracted" };
+    match target {
+        Some(target) => println!("{past} {done} into {target}"),
+        None => println!("{past} {done}"),
+    }
+    Ok(())
 }
 
 fn describe(job: &Job) -> (String, String) {
