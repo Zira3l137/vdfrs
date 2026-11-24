@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: Check (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Clippy runs on both: the drag out of the window and Explorer integration are Windows-only
+        # code, which a Linux build never compiles.
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - name: Install GPUI's libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -yq libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev \
+            libxcb1-dev libvulkan-dev libfontconfig-dev
+      # Pull requests read main's cache but never write their own, which would only evict it.
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.os }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - run: cargo fmt --check
+        if: runner.os == 'Linux'
+      - run: cargo clippy --locked --all-targets -- -D warnings
+      - run: cargo test --locked
