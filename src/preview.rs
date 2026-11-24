@@ -413,7 +413,7 @@ fn decode_texture(data: &[u8]) -> zenkit::Result<Decoded> {
         .unwrap_or(texture.mipmap_count().saturating_sub(1));
     let (width, height) = texture.mipmap_dimensions(level);
     let mut bgra = texture.to_rgba8(level)?;
-    for pixel in bgra.chunks_exact_mut(4) {
+    for pixel in bgra.as_chunks_mut::<4>().0 {
         pixel.swap(0, 2);
     }
     let mut details = format!(
