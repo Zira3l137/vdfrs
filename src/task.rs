@@ -255,7 +255,11 @@ impl Render for TaskView {
                     })
                     .child(div().text_xs().text_color(theme.muted_foreground).child(match total {
                         0 => "Reading…".to_owned(),
-                        _ => format!("{done} of {}", format::count(total, "file", "files")),
+                        _ => format!(
+                            "{} of {}",
+                            format::grouped(done as u64),
+                            format::count(total, "file", "files")
+                        ),
                     })),
                 State::Failed(reason) => this
                     .child(

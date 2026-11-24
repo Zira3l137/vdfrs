@@ -24,7 +24,20 @@ pub fn size(bytes: u64) -> String {
 }
 
 pub fn items(count: u64) -> String {
-    if count == 1 { "1 item".into() } else { format!("{count} items") }
+    if count == 1 { "1 item".into() } else { format!("{} items", grouped(count)) }
+}
+
+/// A number with its thousands set apart, as in 39,001.
+pub fn grouped(n: impl Into<u64>) -> String {
+    let digits = n.into().to_string();
+    let mut out = String::with_capacity(digits.len() + digits.len() / 3);
+    for (i, digit) in digits.chars().enumerate() {
+        if i > 0 && (digits.len() - i) % 3 == 0 {
+            out.push(',');
+        }
+        out.push(digit);
+    }
+    out
 }
 
 pub fn time(time: SystemTime) -> String {
@@ -32,7 +45,7 @@ pub fn time(time: SystemTime) -> String {
 }
 
 pub fn count(n: usize, one: &str, many: &str) -> String {
-    format!("{n} {}", if n == 1 { one } else { many })
+    format!("{} {}", grouped(n as u64), if n == 1 { one } else { many })
 }
 
 #[cfg(test)]
@@ -45,5 +58,9 @@ mod tests {
         assert_eq!(size(1023), "1023 B");
         assert_eq!(size(1536), "1.5 KB");
         assert_eq!(size(44 * 1024 * 1024), "44 MB");
+        assert_eq!(grouped(7u64), "7");
+        assert_eq!(grouped(39_001u64), "39,001");
+        assert_eq!(grouped(1_234_567u64), "1,234,567");
+        assert_eq!(count(20_000, "match", "matches"), "20,000 matches");
     }
 }

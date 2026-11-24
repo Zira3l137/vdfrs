@@ -1214,7 +1214,7 @@ impl ArchiveView {
         let mut left = if self.query.is_empty() {
             format::items(self.rows.len() as u64)
         } else if self.truncated {
-            format!("First {SEARCH_LIMIT} matches")
+            format!("First {} matches", format::grouped(SEARCH_LIMIT as u64))
         } else {
             format::count(self.rows.len(), "match", "matches")
         };

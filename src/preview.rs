@@ -196,7 +196,7 @@ impl ArchiveView {
                     format::size(bytes)
                 );
                 let icon = Icon::new(gpui_kit::assets::IconName::Layers).text_color(theme.primary);
-                let title = format!("{} items selected", self.selection.len());
+                let title = format!("{} selected", format::items(self.selection.len() as u64));
                 (
                     header(icon, title.into(), subtitle.into()).into_any_element(),
                     div().into_any_element(),

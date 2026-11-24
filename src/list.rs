@@ -211,7 +211,11 @@ impl ArchiveView {
             })
             .child(cell(Column::Kind, "Type", cx).w(px(KIND_WIDTH)))
             .child(cell(Column::Size, "Size", cx).w(px(SIZE_WIDTH)))
-            .child(cell(Column::Modified, "Modified", cx).w(px(TIME_WIDTH)))
+            // Search results make room for the folder they are in instead: within one archive
+            // every file usually carries the same date anyway.
+            .when(!searching, |this| {
+                this.child(cell(Column::Modified, "Modified", cx).w(px(TIME_WIDTH)))
+            })
     }
 
     fn render_row(&self, ix: usize, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
@@ -230,7 +234,7 @@ impl ArchiveView {
             paths: if selected { self.selection.clone() } else { std::rc::Rc::new([path.clone()]) },
             icon: row.kind.icon(),
             label: if selected && self.selection.len() > 1 {
-                format!("{} items", self.selection.len()).into()
+                format::items(self.selection.len() as u64).into()
             } else {
                 row.name.clone().into()
             },
@@ -304,14 +308,16 @@ impl ArchiveView {
                         format::size(row.size)
                     }),
             )
-            .child(
-                div()
-                    .w(px(TIME_WIDTH))
-                    .px_2()
-                    .text_xs()
-                    .text_color(muted)
-                    .child(format::time(row.time)),
-            )
+            .when(!searching, |this| {
+                this.child(
+                    div()
+                        .w(px(TIME_WIDTH))
+                        .px_2()
+                        .text_xs()
+                        .text_color(muted)
+                        .child(format::time(row.time)),
+                )
+            })
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener({
