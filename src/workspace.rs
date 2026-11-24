@@ -366,6 +366,13 @@ impl Workspace {
             .min_w_0()
             .gap_1()
             .overflow_x_scroll()
+            .occlude()
+            .drag_over::<ExternalPaths>(|style, _, _, cx| {
+                style.bg(cx.theme().drop_target.opacity(0.35))
+            })
+            .on_drop(cx.listener(|this, paths: &ExternalPaths, window, cx| {
+                this.drop_paths(paths, window, cx)
+            }))
             .children(self.tabs.iter().enumerate().map(|(ix, tab)| {
                 let active = ix == self.active;
                 let view = tab.read(cx);
@@ -578,62 +585,84 @@ impl Render for Workspace {
                             this.drop_paths(paths, window, cx)
                         }))
                         .child(self.render_tabs(cx))
+                        // On Windows the title bar is a caption, and when a button takes the press
+                        // on a caption, Windows never sends the release, so the click only ends
+                        // on the next right click. Occluding the controls leaves them out of the
+                        // caption, and they get ordinary clicks.
                         .child(
-                            Button::new("open-tab")
-                                .ghost()
-                                .small()
-                                .icon(IconName::FolderOpen)
-                                .tooltip_with_action("Open archive…", &OpenArchive, Some(WORKSPACE))
-                                .on_click(cx.listener(|this, _, window, cx| {
-                                    this.open_archive(&OpenArchive, window, cx)
-                                })),
-                        )
-                        .child(
-                            Button::new("new-tab")
-                                .ghost()
-                                .small()
-                                .icon(IconName::Plus)
-                                .tooltip_with_action("New archive", &NewArchive, Some(WORKSPACE))
-                                .on_click(cx.listener(|this, _, window, cx| {
-                                    this.new_archive(&NewArchive, window, cx)
-                                })),
+                            h_flex()
+                                .gap_2()
+                                .occlude()
+                                .child(
+                                    Button::new("open-tab")
+                                        .ghost()
+                                        .small()
+                                        .icon(IconName::FolderOpen)
+                                        .tooltip_with_action(
+                                            "Open archive…",
+                                            &OpenArchive,
+                                            Some(WORKSPACE),
+                                        )
+                                        .on_click(cx.listener(|this, _, window, cx| {
+                                            this.open_archive(&OpenArchive, window, cx)
+                                        })),
+                                )
+                                .child(
+                                    Button::new("new-tab")
+                                        .ghost()
+                                        .small()
+                                        .icon(IconName::Plus)
+                                        .tooltip_with_action(
+                                            "New archive",
+                                            &NewArchive,
+                                            Some(WORKSPACE),
+                                        )
+                                        .on_click(cx.listener(|this, _, window, cx| {
+                                            this.new_archive(&NewArchive, window, cx)
+                                        })),
+                                ),
                         )
                         .child(div().flex_1())
-                        .when(count > 0, |this| {
-                            this.child(
-                                Button::new("settings")
-                                    .ghost()
-                                    .small()
-                                    .icon(IconName::Settings)
-                                    .tooltip("Archive settings…")
-                                    .on_click(cx.listener(|this, _, window, cx| {
-                                        if let Some(tab) = this.active_tab().cloned() {
-                                            crate::settings::open(tab, window, cx);
-                                        }
-                                    })),
-                            )
-                        })
-                        .when(cfg!(windows), |this| {
-                            this.child(
-                                Button::new("integration")
-                                    .ghost()
-                                    .small()
-                                    .icon(IconName::FolderCog)
-                                    .tooltip("Explorer integration…")
-                                    .on_click(|_, window, cx| {
-                                        crate::settings::open_integration(window, cx)
-                                    }),
-                            )
-                        })
                         .child(
-                            Button::new("theme")
-                                .ghost()
-                                .small()
-                                .icon(if dark { IconName::Sun } else { IconName::Moon })
-                                .tooltip(if dark { "Light theme" } else { "Dark theme" })
-                                .on_click(cx.listener(|this, _, window, cx| {
-                                    this.toggle_theme(&ToggleTheme, window, cx)
-                                })),
+                            h_flex()
+                                .gap_2()
+                                .occlude()
+                                .when(count > 0, |this| {
+                                    this.child(
+                                        Button::new("settings")
+                                            .ghost()
+                                            .small()
+                                            .icon(IconName::Settings)
+                                            .tooltip("Archive settings…")
+                                            .on_click(cx.listener(|this, _, window, cx| {
+                                                if let Some(tab) = this.active_tab().cloned() {
+                                                    crate::settings::open(tab, window, cx);
+                                                }
+                                            })),
+                                    )
+                                })
+                                .when(cfg!(windows), |this| {
+                                    this.child(
+                                        Button::new("integration")
+                                            .ghost()
+                                            .small()
+                                            .icon(IconName::FolderCog)
+                                            .tooltip("Explorer integration…")
+                                            .on_click(|_, window, cx| {
+                                                crate::settings::open_integration(window, cx)
+                                            }),
+                                    )
+                                })
+                                .child(
+                                    Button::new("theme")
+                                        .ghost()
+                                        .small()
+                                        .icon(if dark { IconName::Sun } else { IconName::Moon })
+                                        .tooltip(if dark { "Light theme" } else { "Dark theme" })
+                                        .on_click(cx.listener(|this, _, window, cx| {
+                                            this.toggle_theme(&ToggleTheme, window, cx)
+                                        })),
+                                ),
                         ),
                 ),
             )
