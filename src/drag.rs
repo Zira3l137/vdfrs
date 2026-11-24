@@ -83,7 +83,7 @@ impl DraggedEntries {
             return None;
         }
         let dir = new_drag_dir().ok()?;
-        let paths = archive::extract(&nodes, &dir).ok()?;
+        let paths = archive::extract(&nodes, &dir, &Default::default()).ok()?;
         let entries = paths.into_iter().zip(nodes.iter().map(Node::is_dir));
         Some(ExternalDragPayload::Files(FileDragPaths::new(entries)))
     }

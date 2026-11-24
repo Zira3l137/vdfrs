@@ -47,6 +47,13 @@ use crate::archive_view::ArchiveEvent;
 use crate::archive_view::ArchiveView;
 use crate::drag::DraggedEntries;
 
+/// What the window starts with.
+pub enum Startup {
+    Open(Vec<PathBuf>),
+    /// A new archive holding these files and folders.
+    New(Vec<PathBuf>),
+}
+
 pub struct Workspace {
     tabs: Vec<Entity<ArchiveView>>,
     /// The order each tab was asked for in, so that archives that load at different speeds
@@ -62,7 +69,7 @@ pub struct Workspace {
 }
 
 impl Workspace {
-    pub fn new(paths: Vec<PathBuf>, window: &mut Window, cx: &mut Context<Self>) -> Self {
+    pub fn new(startup: Startup, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let workspace = Self {
             tabs: Vec::new(),
             order: Vec::new(),
@@ -80,7 +87,10 @@ impl Workspace {
         });
         let entity = cx.entity();
         window.defer(cx, move |window, cx| {
-            entity.update(cx, |this, cx| this.open_paths(paths, window, cx));
+            entity.update(cx, |this, cx| match startup {
+                Startup::Open(paths) => this.open_paths(paths, window, cx),
+                Startup::New(paths) => this.new_archive_with(paths, window, cx),
+            });
         });
         workspace
     }
@@ -328,12 +338,23 @@ impl Workspace {
         let (archives, others): (Vec<PathBuf>, Vec<PathBuf>) =
             paths.paths().iter().cloned().partition(|path| is_archive(path));
         self.open_paths(archives, window, cx);
-        if !others.is_empty() {
-            let order = self.take_order();
-            self.add_tab(Archive::new(), order, window, cx);
-            if let Some(tab) = self.active_tab().cloned() {
-                tab.update(cx, |tab, cx| tab.add_paths(others, "/".into(), window, cx));
-            }
+        self.new_archive_with(others, window, cx);
+    }
+
+    /// Opens a new archive holding `paths`, read from disk in the background.
+    pub fn new_archive_with(
+        &mut self,
+        paths: Vec<PathBuf>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if paths.is_empty() {
+            return;
+        }
+        let order = self.take_order();
+        self.add_tab(Archive::new(), order, window, cx);
+        if let Some(tab) = self.active_tab().cloned() {
+            tab.update(cx, |tab, cx| tab.add_paths(paths, "/".into(), window, cx));
         }
     }
 
@@ -590,6 +611,18 @@ impl Render for Workspace {
                                             crate::settings::open(tab, window, cx);
                                         }
                                     })),
+                            )
+                        })
+                        .when(cfg!(windows), |this| {
+                            this.child(
+                                Button::new("integration")
+                                    .ghost()
+                                    .small()
+                                    .icon(IconName::FolderCog)
+                                    .tooltip("Explorer integration…")
+                                    .on_click(|_, window, cx| {
+                                        crate::settings::open_integration(window, cx)
+                                    }),
                             )
                         })
                         .child(

@@ -8,6 +8,8 @@ use std::io::BufWriter;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering;
 use std::time::Duration;
 use std::time::Instant;
 use std::time::SystemTime;
@@ -479,9 +481,9 @@ pub fn import(paths: &[PathBuf]) -> Result<Vec<Node>> {
 }
 
 /// Writes copies of archive nodes to `dest` on the host: files as files, directories as folders
-/// with everything in them. Files are written in parallel. Returns the paths of what was written
-/// at the top, one per node.
-pub fn extract(nodes: &[Node], dest: &Path) -> Result<Vec<PathBuf>> {
+/// with everything in them. Files are written in parallel, each counted in `written` once it is
+/// on disk. Returns the paths of what was written at the top, one per node.
+pub fn extract(nodes: &[Node], dest: &Path, written: &AtomicUsize) -> Result<Vec<PathBuf>> {
     let mut dirs = Vec::new();
     let mut files = Vec::new();
     let mut top = Vec::with_capacity(nodes.len());
@@ -515,6 +517,7 @@ pub fn extract(nodes: &[Node], dest: &Path) -> Result<Vec<PathBuf>> {
         fs::write(path, data).map_err(Error::io_write(path))?;
         let time = fs::FileTimes::new().set_modified(node.time());
         let _ = fs::File::options().write(true).open(path).and_then(|file| file.set_times(time));
+        written.fetch_add(1, Ordering::Relaxed);
         Ok::<_, Error>(())
     })?;
     Ok(top)
@@ -714,8 +717,10 @@ mod tests {
         assert_eq!(reopened.options(), archive.options());
         assert!(!dir.join(".out.vdf.saving").exists());
 
-        let extracted = extract(&reopened.take_copies(&["/LICENSES".into()]), &dir).unwrap();
-        assert_eq!(extracted, [dir.join("LICENSES")]);
+        let written = AtomicUsize::new(0);
+        let extracted = extract(&reopened.take_copies(&["/LICENSES".into()]), &dir, &written);
+        assert_eq!(extracted.unwrap(), [dir.join("LICENSES")]);
+        assert_eq!(written.into_inner(), 3);
         let mit = fs::read_to_string(dir.join("LICENSES/MIT.MD")).unwrap();
         assert!(mit.starts_with("# The MIT license"));
         assert!(dir.join("LICENSES/GPL/LGPL-3.0.MD").is_file());

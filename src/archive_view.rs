@@ -515,9 +515,11 @@ impl ArchiveView {
     /// Opens a file in the program the system has for it, from a temporary copy.
     fn open_with_system(&mut self, entry: &Entry, window: &mut Window, cx: &mut Context<Self>) {
         let nodes = self.archive.take_copies(&[entry.path.to_string()]);
-        let opened = crate::drag::new_drag_dir()
-            .map_err(|error| error.to_string())
-            .and_then(|dir| archive::extract(&nodes, &dir).map_err(|e| e.report().to_string()));
+        let opened =
+            crate::drag::new_drag_dir().map_err(|error| error.to_string()).and_then(|dir| {
+                archive::extract(&nodes, &dir, &Default::default())
+                    .map_err(|e| e.report().to_string())
+            });
         match opened {
             Ok(paths) => paths.iter().for_each(|path| cx.open_with_system(path)),
             Err(reason) => window.push_notification(Notification::error(reason), cx),
@@ -862,8 +864,11 @@ impl ArchiveView {
                 cx.notify();
             });
             let target = dest.clone();
-            let result =
-                cx.background_spawn(async move { archive::extract(&nodes, &target) }).await;
+            let result = cx
+                .background_spawn(
+                    async move { archive::extract(&nodes, &target, &Default::default()) },
+                )
+                .await;
             let _ = this.update_in(cx, |this, window, cx| {
                 this.busy = None;
                 let note = match result {
