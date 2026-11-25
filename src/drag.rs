@@ -235,7 +235,7 @@ pub mod windows {
         // SAFETY: releases a capture this thread holds, if any; nothing relies on it afterwards.
         let _ = unsafe { ReleaseCapture() };
 
-        std::thread::spawn(move || {
+        let spawned = std::thread::Builder::new().name("drag-out".into()).spawn(move || {
             // SAFETY: OLE is set up and torn down on this thread alone, around the one drag.
             // Attaching to the window's thread shares its input state, so the shell sees the
             // button that is still held down from the window.
@@ -256,5 +256,8 @@ pub mod windows {
                 OleUninitialize();
             }
         });
+        if let Err(error) = spawned {
+            eprintln!("vdfrs: cannot start the drag: {error}");
+        }
     }
 }
