@@ -50,7 +50,9 @@ pub struct DraggedEntries {
     pub paths: Rc<[Arc<str>]>,
     pub icon: IconName,
     pub label: SharedString,
-    /// Set once the drag has left the window and become the system's.
+    /// Set once the drag has left the window and become the system's. Only Windows hands a drag
+    /// out itself.
+    #[cfg_attr(not(windows), allow(dead_code))]
     pub handed_out: Rc<Cell<bool>>,
 }
 

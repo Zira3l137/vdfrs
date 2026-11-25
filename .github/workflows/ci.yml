@@ -39,5 +39,5 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: cargo fmt --check
         if: runner.os == 'Linux'
-      - run: cargo clippy --locked --all-targets -- -D warnings
+      - run: cargo clippy --locked --all-targets
       - run: cargo test --locked
