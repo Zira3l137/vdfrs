@@ -77,21 +77,25 @@ impl DraggedEntries {
 
     /// Extracts the dragged entries for a drag leaving the window, see the module's docs.
     pub fn external_payload(&self, cx: &App) -> Option<ExternalDragPayload> {
-        let nodes = self.nodes(cx);
-        let total: u64 = nodes
-            .iter()
-            .flat_map(|node| std::iter::once(node).chain(node.descendants()))
-            .filter_map(|node| node.size())
-            .map(|size| size as u64)
-            .sum();
-        if nodes.is_empty() || total > DRAG_OUT_LIMIT {
-            return None;
-        }
-        let dir = new_drag_dir().ok()?;
-        let paths = archive::extract(&nodes, &dir, &Default::default()).ok()?;
-        let entries = paths.into_iter().zip(nodes.iter().map(Node::is_dir));
-        Some(ExternalDragPayload::Files(FileDragPaths::new(entries)))
+        external_payload(&self.nodes(cx))
     }
+}
+
+/// Extracts `nodes` for a drag leaving the window, or `None` if there are none or too much.
+pub fn external_payload(nodes: &[Node]) -> Option<ExternalDragPayload> {
+    let total: u64 = nodes
+        .iter()
+        .flat_map(|node| std::iter::once(node).chain(node.descendants()))
+        .filter_map(|node| node.size())
+        .map(|size| size as u64)
+        .sum();
+    if nodes.is_empty() || total > DRAG_OUT_LIMIT {
+        return None;
+    }
+    let dir = new_drag_dir().ok()?;
+    let paths = archive::extract(nodes, &dir, &Default::default()).ok()?;
+    let entries = paths.into_iter().zip(nodes.iter().map(Node::is_dir));
+    Some(ExternalDragPayload::Files(FileDragPaths::new(entries)))
 }
 
 pub struct DragGhost {

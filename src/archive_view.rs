@@ -1097,7 +1097,14 @@ impl ArchiveView {
         if inside || dragged.handed_out.replace(true) {
             return;
         }
-        let payload = dragged.external_payload(cx);
+        // The drag started here, and this view is being updated while this runs: reading it
+        // through its entity, as the dragged entries otherwise do, would panic.
+        let nodes = if dragged.source_id == cx.entity_id() {
+            self.archive.take_copies(&dragged.paths())
+        } else {
+            dragged.nodes(cx)
+        };
+        let payload = crate::drag::external_payload(&nodes);
         // The drag ends once this mouse move has been dispatched, not while it is: the listeners
         // after this one, and GPUI Fast's bookkeeping, still take the drag to be there.
         cx.defer_in(window, move |_, window, cx| {
