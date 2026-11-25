@@ -37,8 +37,9 @@ impl ArchiveView {
             .size_full()
             .bg(theme.sidebar)
             .child(
+                // A new id after each edit, as the file list's.
                 uniform_list(
-                    "tree",
+                    ("tree", self.archive.generation()),
                     self.tree_rows.len(),
                     cx.processor(|this, range: Range<usize>, window, cx| {
                         range.map(|ix| this.render_tree_row(ix, window, cx)).collect::<Vec<_>>()

@@ -54,8 +54,10 @@ impl ArchiveView {
         let view = cx.entity().downgrade();
         let this_tab = cx.entity_id();
 
+        // A new id after each edit gives GPUI Fast a new list, whose rows it cannot mistake for
+        // those it kept from before: it kept them across a drop onto a folder.
         let list = uniform_list(
-            "rows",
+            ("rows", self.archive.generation()),
             self.rows.len(),
             cx.processor(|this, range: Range<usize>, window, cx| {
                 range.map(|ix| this.render_row(ix, window, cx)).collect::<Vec<_>>()
@@ -251,6 +253,7 @@ impl ArchiveView {
             } else {
                 row.name.clone().into()
             },
+            handed_out: std::rc::Rc::default(),
         };
 
         let name: AnyElement = match renaming {

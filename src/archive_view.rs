@@ -1093,22 +1093,27 @@ impl ArchiveView {
             && position.y >= px(0.)
             && position.x < size.width
             && position.y < size.height;
-        if inside {
+        let dragged = event.drag(cx);
+        if inside || dragged.handed_out.replace(true) {
             return;
         }
-        let payload = event.drag(cx).external_payload(cx);
-        cx.stop_active_drag(window);
-        match payload {
-            Some(gpui_kit::ExternalDragPayload::Files(files)) => {
-                crate::drag::windows::start(
-                    files.entries().iter().map(|(path, _)| path.clone()).collect(),
-                );
+        let payload = dragged.external_payload(cx);
+        // The drag ends once this mouse move has been dispatched, not while it is: the listeners
+        // after this one, and GPUI Fast's bookkeeping, still take the drag to be there.
+        cx.defer_in(window, move |_, window, cx| {
+            cx.stop_active_drag(window);
+            match payload {
+                Some(gpui_kit::ExternalDragPayload::Files(files)) => {
+                    crate::drag::windows::start(
+                        files.entries().iter().map(|(path, _)| path.clone()).collect(),
+                    );
+                }
+                None => {
+                    let note = "Too much to drag out at once; use Extract instead";
+                    window.push_notification(Notification::warning(note), cx);
+                }
             }
-            None => {
-                let note = "Too much to drag out at once; use Extract instead";
-                window.push_notification(Notification::warning(note), cx);
-            }
-        }
+        });
     }
 
     fn render_toolbar(&self, cx: &mut Context<Self>) -> impl IntoElement {

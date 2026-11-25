@@ -117,7 +117,32 @@ impl AssetSource for Assets {
     }
 }
 
+/// Where the last crash is described. A window app that panics on Windows just disappears, so
+/// this is the only trace it leaves.
+fn crash_log() -> std::path::PathBuf {
+    std::env::temp_dir().join("vdfrs").join("crash.log")
+}
+
+fn log_panics() {
+    let default = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        let path = crash_log();
+        let report = format!(
+            "vdfrs {} crashed at {}\n{info}\n\n{}\n",
+            env!("CARGO_PKG_VERSION"),
+            chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
+            std::backtrace::Backtrace::force_capture(),
+        );
+        if let Some(dir) = path.parent() {
+            let _ = std::fs::create_dir_all(dir);
+        }
+        let _ = std::fs::write(&path, report);
+        default(info);
+    }));
+}
+
 fn main() -> ExitCode {
+    log_panics();
     // In release builds on Windows the program has no console of its own, so output goes to the
     // terminal it was started from, if any; from Explorer there is none, and nothing changes.
     #[cfg(windows)]

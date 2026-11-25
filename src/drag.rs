@@ -7,6 +7,7 @@
 //! system's drag instead. GPUI does that hand-over itself where its backend can (Wayland); on
 //! Windows, whose backend cannot yet, [`windows::start`] runs the shell's drag.
 
+use std::cell::Cell;
 use std::path::PathBuf;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -49,6 +50,8 @@ pub struct DraggedEntries {
     pub paths: Rc<[Arc<str>]>,
     pub icon: IconName,
     pub label: SharedString,
+    /// Set once the drag has left the window and become the system's.
+    pub handed_out: Rc<Cell<bool>>,
 }
 
 impl DraggedEntries {
