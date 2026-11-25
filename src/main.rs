@@ -9,6 +9,7 @@
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
 mod actions;
+mod appearance;
 mod archive;
 mod archive_view;
 mod cli;
@@ -18,6 +19,7 @@ mod gather;
 mod jobs;
 mod kind;
 mod list;
+mod prefs;
 mod preview;
 mod settings;
 mod shell;
@@ -36,7 +38,6 @@ use gpui_kit::AssetSource;
 use gpui_kit::SharedString;
 use gpui_kit::WindowBounds;
 use gpui_kit::WindowOptions;
-use gpui_kit::component::Theme;
 use gpui_kit::component::TitleBar;
 use gpui_kit::px;
 use gpui_kit::size;
@@ -82,6 +83,7 @@ gpui_kit::assets::icon_assets!(
         Moon,
         Music,
         Package,
+        Palette,
         PanelRight,
         PersonStanding,
         Plus,
@@ -215,6 +217,7 @@ fn run_app(run: Run) {
     std::thread::spawn(drag::clean_old_drags);
     gpui_kit::application().with_assets(Assets).run(move |cx| {
         gpui_kit::init(cx);
+        cx.set_global(prefs::Prefs::load());
         actions::bind(cx);
         cx.on_window_closed(|cx, _| {
             if cx.windows().is_empty() {
@@ -238,7 +241,7 @@ fn run_app(run: Run) {
                     ..WindowOptions::default()
                 };
                 gpui_kit::open_window(options, cx, |window, cx| {
-                    Theme::sync_system_appearance(Some(window), cx);
+                    appearance::apply(window, cx);
                     cx.new(|cx| Workspace::new(startup, window, cx))
                 })
                 .map(drop)

@@ -693,7 +693,8 @@ impl ArchiveView {
             n => (format!("Delete {n} items?"), "Undo brings them back while the archive is open."),
         };
         let view = cx.entity().downgrade();
-        window.open_alert_dialog(cx, move |alert, _, _| {
+        window.open_alert_dialog(cx, move |alert, _, cx| {
+            let alert = alert.bg(crate::appearance::dialog_fill(cx));
             let view = view.clone();
             let paths = paths.clone();
             alert

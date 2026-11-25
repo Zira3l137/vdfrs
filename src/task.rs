@@ -293,6 +293,7 @@ pub fn open(job: Job, cx: &mut App) -> gpui_kit::Result<()> {
     };
     gpui_kit::open_window(options, cx, |window, cx| {
         window.set_window_title("vdfrs");
+        crate::appearance::apply(window, cx);
         cx.new(|cx| TaskView::new(job, window, cx))
     })?;
     Ok(())

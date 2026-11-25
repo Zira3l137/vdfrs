@@ -58,7 +58,10 @@ rendering and layout; `--no-default-features` builds it on Zed's GPUI instead.
   archive that then takes its place, so a failed save leaves the old archive whole.
 - **Extracting** the selection or the whole archive to a folder, in parallel.
 - Opening any file in the program the system has for it, from a temporary copy.
-- Light and dark themes.
+- **Appearance.** Light and dark themes, or the system's, and on Windows 11 (22H2 or later) the
+  Mica and Mica Alt window materials, which tint the window with the desktop's wallpaper. The
+  choice is kept in `vdfrs/settings.toml` in your config folder (`%APPDATA%` on Windows,
+  `~/.config` on Linux).
 
 <table>
   <tr>

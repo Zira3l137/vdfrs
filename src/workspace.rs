@@ -25,8 +25,6 @@ use gpui_kit::assets::IconName;
 use gpui_kit::component::ActiveTheme as _;
 use gpui_kit::component::Icon;
 use gpui_kit::component::Sizable as _;
-use gpui_kit::component::Theme;
-use gpui_kit::component::ThemeMode;
 use gpui_kit::component::TitleBar;
 use gpui_kit::component::WindowExt as _;
 use gpui_kit::component::button::Button;
@@ -46,6 +44,7 @@ use crate::archive::Archive;
 use crate::archive_view::ArchiveEvent;
 use crate::archive_view::ArchiveView;
 use crate::drag::DraggedEntries;
+use crate::prefs::ThemeChoice;
 
 /// What the window starts with.
 pub enum Startup {
@@ -78,7 +77,11 @@ impl Workspace {
             focus: cx.focus_handle(),
             opening: Vec::new(),
             closing: HashSet::new(),
-            _subscriptions: Vec::new(),
+            // GPUI resets the window's dark frame when the system's appearance changes, and a
+            // theme that follows the system changes with it.
+            _subscriptions: vec![cx.observe_window_appearance(window, |_, window, cx| {
+                crate::appearance::apply(window, cx);
+            })],
         };
         window.focus(&workspace.focus, cx);
         let this = cx.entity().downgrade();
@@ -220,7 +223,8 @@ impl Workspace {
         }
         let title = format!("Save changes to “{}”?", tab.read(cx).archive().title());
         let this = cx.entity().downgrade();
-        window.open_dialog(cx, move |dialog, _, _| {
+        window.open_dialog(cx, move |dialog, _, cx| {
+            let dialog = dialog.bg(crate::appearance::dialog_fill(cx));
             let (this, tab, discard) = (this.clone(), tab.clone(), this.clone());
             let id = tab.entity_id();
             dialog
@@ -291,7 +295,8 @@ impl Workspace {
             many => format!("Close without saving {} archives?", many.len()),
         };
         let this = cx.entity().downgrade();
-        window.open_alert_dialog(cx, move |alert, _, _| {
+        window.open_alert_dialog(cx, move |alert, _, cx| {
+            let alert = alert.bg(crate::appearance::dialog_fill(cx));
             let this = this.clone();
             alert
                 .title(title.clone())
@@ -321,8 +326,8 @@ impl Workspace {
     }
 
     fn toggle_theme(&mut self, _: &ToggleTheme, window: &mut Window, cx: &mut Context<Self>) {
-        let mode = if cx.theme().is_dark() { ThemeMode::Light } else { ThemeMode::Dark };
-        Theme::change(mode, Some(window), cx);
+        let theme = if cx.theme().is_dark() { ThemeChoice::Light } else { ThemeChoice::Dark };
+        crate::appearance::change(window, cx, |prefs| prefs.theme = theme);
     }
 
     fn step_tab(&mut self, delta: isize, window: &mut Window, cx: &mut Context<Self>) {
@@ -653,6 +658,16 @@ impl Render for Workspace {
                                             }),
                                     )
                                 })
+                                .child(
+                                    Button::new("appearance")
+                                        .ghost()
+                                        .small()
+                                        .icon(IconName::Palette)
+                                        .tooltip("Appearance…")
+                                        .on_click(|_, window, cx| {
+                                            crate::settings::open_appearance(window, cx)
+                                        }),
+                                )
                                 .child(
                                     Button::new("theme")
                                         .ghost()

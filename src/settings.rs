@@ -1,4 +1,5 @@
-//! The archive's settings: what its header says when it is saved.
+//! The dialogs: an archive's settings, what its header says when it is saved; the app's
+//! appearance; and Explorer integration.
 
 use gpui_kit::AppContext as _;
 use gpui_kit::Context;
@@ -23,10 +24,15 @@ use gpui_kit::component::radio::RadioGroup;
 use gpui_kit::component::switch::Switch;
 use gpui_kit::component::v_flex;
 use gpui_kit::div;
+use gpui_kit::prelude::FluentBuilder as _;
 use zenkit::GameVersion;
 use zenkit::vfs::DiskOptions;
 
+use crate::appearance;
 use crate::archive_view::ArchiveView;
+use crate::prefs::Material;
+use crate::prefs::Prefs;
+use crate::prefs::ThemeChoice;
 use crate::shell;
 
 pub struct SettingsForm {
@@ -97,7 +103,8 @@ pub fn open(view: Entity<ArchiveView>, window: &mut Window, cx: &mut gpui_kit::A
         game: options.game,
         compressed: options.compressed,
     });
-    window.open_dialog(cx, move |dialog, _, _| {
+    window.open_dialog(cx, move |dialog, _, cx| {
+        let dialog = dialog.bg(crate::appearance::dialog_fill(cx));
         let form = form.clone();
         let view = view.clone();
         dialog.title("Archive settings").w(gpui_kit::px(440.)).child(form.clone()).footer(
@@ -112,6 +119,79 @@ pub fn open(view: Entity<ArchiveView>, window: &mut Window, cx: &mut gpui_kit::A
                         window.close_dialog(cx);
                     },
                 )),
+        )
+    });
+}
+
+/// The app's appearance. Unlike the other dialogs it applies each change at once, so the choice
+/// can be seen while it is made, and saves it.
+pub struct AppearanceForm;
+
+impl Render for AppearanceForm {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let muted = cx.theme().muted_foreground;
+        let prefs = *cx.global::<Prefs>();
+        Form::new()
+            .child(
+                Field::new().label("Theme").child(
+                    RadioGroup::horizontal("theme")
+                        .children(["System", "Light", "Dark"])
+                        .selected_index(position(&ThemeChoice::ALL, prefs.theme))
+                        .on_change(cx.listener(|_, ix: &usize, window, cx| {
+                            appearance::change(window, cx, |prefs| {
+                                prefs.theme = ThemeChoice::ALL[*ix];
+                            });
+                            cx.notify();
+                        })),
+                ),
+            )
+            .when(appearance::mica_supported(), |form| {
+                form.child(
+                    Field::new()
+                        .label("Window material")
+                        .description(
+                            "Mica tints the window with the desktop's wallpaper; Mica Alt tints \
+                             it more strongly.",
+                        )
+                        .child(
+                            RadioGroup::horizontal("material")
+                                .children(["Solid", "Mica", "Mica Alt"])
+                                .selected_index(position(&Material::ALL, prefs.material))
+                                .on_change(cx.listener(|_, ix: &usize, window, cx| {
+                                    appearance::change(window, cx, |prefs| {
+                                        prefs.material = Material::ALL[*ix];
+                                    });
+                                    cx.notify();
+                                })),
+                        ),
+                )
+            })
+            .when(cfg!(windows) && !appearance::mica_supported(), |form| {
+                form.child(
+                    Field::new().label_indent(false).child(
+                        div().text_xs().text_color(muted).child(
+                            "The Mica window materials need Windows 11, version 22H2 or later.",
+                        ),
+                    ),
+                )
+            })
+    }
+}
+
+fn position<T: PartialEq>(all: &[T], current: T) -> Option<usize> {
+    all.iter().position(|item| *item == current)
+}
+
+pub fn open_appearance(window: &mut Window, cx: &mut gpui_kit::App) {
+    let form = cx.new(|_| AppearanceForm);
+    window.open_dialog(cx, move |dialog, _, cx| {
+        let dialog = dialog.bg(crate::appearance::dialog_fill(cx));
+        dialog.title("Appearance").w(gpui_kit::px(440.)).child(form.clone()).footer(
+            DialogFooter::new().child(Button::new("done").primary().label("Done").on_click(
+                |_, window, cx| {
+                    window.close_dialog(cx);
+                },
+            )),
         )
     });
 }
@@ -171,7 +251,8 @@ pub fn open_integration(window: &mut Window, cx: &mut gpui_kit::App) {
         associate: matches!(status, shell::Status::Installed { associated: true, .. }),
         status,
     });
-    window.open_dialog(cx, move |dialog, _, _| {
+    window.open_dialog(cx, move |dialog, _, cx| {
+        let dialog = dialog.bg(crate::appearance::dialog_fill(cx));
         let form = form.clone();
         dialog.title("Explorer integration").w(gpui_kit::px(460.)).child(form.clone()).footer(
             DialogFooter::new()
