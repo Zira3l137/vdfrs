@@ -25,6 +25,7 @@ zenkit = { package = "zenkit-rs", version = "0.1.2", default-features = false, f
 ] }
 
 [features]
+default = ["gpui-fast"]
 # Builds on GPUI Fast, longbridge's fork of GPUI with faster rendering and layout, instead of Zed's.
 gpui-fast = ["gpui-kit/gpui-fast"]
 
