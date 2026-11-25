@@ -551,7 +551,7 @@ pub fn join(dir: &str, name: &str) -> String {
 }
 
 /// Archive names may hold characters the host refuses in file names; they become `_`.
-fn host_name(name: &str) -> String {
+pub(crate) fn host_name(name: &str) -> String {
     let name: String = name
         .chars()
         .map(|c| if matches!(c, '<' | '>' | ':' | '"' | '|' | '?' | '*' | '\\') { '_' } else { c })

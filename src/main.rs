@@ -14,6 +14,7 @@ mod archive;
 mod archive_view;
 mod cli;
 mod drag;
+mod export;
 mod format;
 mod gather;
 mod jobs;

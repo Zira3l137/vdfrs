@@ -131,6 +131,7 @@ impl ArchiveView {
                         let this = view.read(cx);
                         let any = !this.selected.is_empty();
                         let single = this.selected.len() == 1;
+                        let can_export = this.can_export();
                         let opens = this.single_selected().is_some();
                         let can_paste = ArchiveView::can_paste(cx);
                         let can_undo = this.archive.can_undo();
@@ -148,6 +149,18 @@ impl ArchiveView {
                                 IconName::FolderOutput,
                                 Box::new(ExtractSelected),
                             )
+                            .when(can_export, |menu| {
+                                menu.menu_with_icon(
+                                    "Export as PNG…",
+                                    IconName::FileImage,
+                                    Box::new(ExportPng),
+                                )
+                                .menu_with_icon(
+                                    "Export as TGA…",
+                                    IconName::FileImage,
+                                    Box::new(ExportTga),
+                                )
+                            })
                             .separator()
                             .menu_with_disabled("Cut", Box::new(CutEntries), !any)
                             .menu_with_disabled("Copy", Box::new(CopyEntries), !any)

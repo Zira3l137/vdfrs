@@ -57,6 +57,9 @@ rendering and layout; `--no-default-features` builds it on Zed's GPUI instead.
   and Union's compression. Archive settings change those. A save goes to a file beside the
   archive that then takes its place, so a failed save leaves the old archive whole.
 - **Extracting** the selection or the whole archive to a folder, in parallel.
+- **Exporting textures** as PNG or TGA from the right-click menu: the selected textures, and
+  those in the selected folders, keeping the folders. Each is named after the picture the game
+  compiled it from, so `STONE-C.TEX` becomes `STONE.PNG`.
 - Opening any file in the program the system has for it, from a temporary copy.
 - **Appearance.** Light and dark themes, or the system's, and on Windows 11 (22H2 or later) the
   Mica and Mica Alt window materials, which tint the window with the desktop's wallpaper. The

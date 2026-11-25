@@ -58,7 +58,10 @@ use crate::archive::Archive;
 use crate::archive::Entry;
 use crate::archive::Outcome;
 use crate::drag::DraggedEntries;
+use crate::export;
+use crate::export::Picture;
 use crate::format;
+use crate::kind::FileKind;
 use crate::preview::Preview;
 
 /// Search results stop here, so that a one-letter query on a huge archive stays instant.
@@ -902,6 +905,74 @@ impl ArchiveView {
         self.extract(paths, window, cx);
     }
 
+    /// Whether the selection may hold textures: a texture, or a folder, which is only searched
+    /// when exporting.
+    pub(crate) fn can_export(&self) -> bool {
+        self.selection.iter().any(|path| {
+            self.index.get(path).is_some_and(|&ix| {
+                let entry = &self.rows[ix];
+                entry.is_dir || entry.kind == FileKind::Texture
+            })
+        })
+    }
+
+    fn export_png(&mut self, _: &ExportPng, window: &mut Window, cx: &mut Context<Self>) {
+        self.export(Picture::Png, window, cx);
+    }
+
+    fn export_tga(&mut self, _: &ExportTga, window: &mut Window, cx: &mut Context<Self>) {
+        self.export(Picture::Tga, window, cx);
+    }
+
+    /// Exports the selected textures, and those in the selected folders, as pictures.
+    fn export(&mut self, picture: Picture, window: &mut Window, cx: &mut Context<Self>) {
+        let nodes = self.archive.take_copies(&self.selected_paths());
+        let count = export::textures(&nodes, picture).len();
+        if count == 0 {
+            window.push_notification(Notification::info("There are no textures to export."), cx);
+            return;
+        }
+        let prompt = cx.prompt_for_paths(PathPromptOptions {
+            files: false,
+            directories: true,
+            multiple: false,
+            prompt: Some("Export here".into()),
+        });
+        cx.spawn_in(window, async move |this, cx| {
+            let Ok(Ok(Some(dirs))) = prompt.await else { return };
+            let Some(dest) = dirs.into_iter().next() else { return };
+            let textures = format::count(count, "texture", "textures");
+            let _ = this.update(cx, |this, cx| {
+                this.busy = Some(format!("Exporting {textures} as {}…", picture.label()).into());
+                cx.notify();
+            });
+            let target = dest.clone();
+            let exported =
+                cx.background_spawn(async move { export::export(&nodes, &target, picture) }).await;
+            let _ = this.update_in(cx, |this, window, cx| {
+                this.busy = None;
+                let note = match exported.failed.first() {
+                    None => {
+                        Notification::success(format!("Exported {textures} to {}", dest.display()))
+                    }
+                    Some((path, reason)) => {
+                        let more = exported.failed.len() - 1;
+                        let more =
+                            if more > 0 { format!(", and {more} more") } else { String::new() };
+                        Notification::error(format!(
+                            "Exported {} of {textures} to {}. {path}: {reason}{more}",
+                            exported.written,
+                            dest.display()
+                        ))
+                    }
+                };
+                window.push_notification(note, cx);
+                cx.notify();
+            });
+        })
+        .detach();
+    }
+
     pub(crate) fn save(&mut self, _: &Save, window: &mut Window, cx: &mut Context<Self>) {
         match self.archive.path().map(ToOwned::to_owned) {
             Some(path) => self.save_to(path, window, cx),
@@ -1293,6 +1364,8 @@ impl Render for ArchiveView {
             .on_action(cx.listener(Self::add_folder))
             .on_action(cx.listener(Self::extract_selected))
             .on_action(cx.listener(Self::extract_all))
+            .on_action(cx.listener(Self::export_png))
+            .on_action(cx.listener(Self::export_tga))
             .on_action(cx.listener(Self::cancel))
             .child(self.render_toolbar(cx))
             .child(

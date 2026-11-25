@@ -48,6 +48,8 @@ actions!(
         AddFolder,
         ExtractSelected,
         ExtractAll,
+        ExportPng,
+        ExportTga,
         CopyEntries,
         CutEntries,
         PasteEntries,

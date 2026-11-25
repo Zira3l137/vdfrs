@@ -16,7 +16,7 @@ chrono = { version = "0.4", default-features = false, features = ["clock", "std"
 dirs = "6"
 gpui-kit = "0.11"
 # GPUI draws images from `image` frames; the explorer hands it decoded textures.
-image = { version = "0.25", default-features = false }
+image = { version = "0.25", default-features = false, features = ["png", "tga"] }
 rayon = "1.12"
 serde = { version = "1", features = ["derive"] }
 smallvec = "1"
