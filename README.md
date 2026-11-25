@@ -19,7 +19,9 @@ its VFS released in zenkit-rs 0.1.1.
 </picture>
 
 Windows and Linux builds of every release are on the
-[releases page](https://github.com/Zira3l137/vdfrs/releases). To build it yourself:
+[releases page](https://github.com/Zira3l137/vdfrs/releases). They are compressed with
+[UPX](https://upx.github.io/), which some antivirus programs distrust; if yours does, build it
+yourself:
 
 ```sh
 cargo run --release -- Data/Anims.vdf Data/ModVDF/MyMod.mod

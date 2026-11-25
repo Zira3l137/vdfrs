@@ -41,6 +41,16 @@ jobs:
       - run: cargo build --locked --release
       - shell: bash
         run: mkdir dist && cp "target/release/${{ matrix.binary }}" "dist/${{ matrix.asset }}"
+      # The default method rather than --lzma: it unpacks several times faster, and Explorer's
+      # menu starts one vdfrs per selected item.
+      - name: Compress with UPX
+        uses: crazy-max/ghaction-upx@v3
+        with:
+          files: dist/${{ matrix.asset }}
+          args: --best
+      - name: Check that the compressed binary runs
+        shell: bash
+        run: '"dist/${{ matrix.asset }}" --version'
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset }}
